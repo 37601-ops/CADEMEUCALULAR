@@ -1,0 +1,18 @@
+{
+  "name": "CadêMeuCelular? - Rastreador Inteligente",
+  "short_name": "CadêMeuCelular?",
+  "description": "Encontre seu celular perdido mesmo no silencioso ou sem internet com radar sônico e GPS.",
+  "start_url": "./app.html",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#EE9C00",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "./assets/cademeucelular_showcase.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

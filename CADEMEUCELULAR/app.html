@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>CadêMeuCelular? - App Mobile</title>
+  <meta name="theme-color" content="#0F172A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Leaflet Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App Styles -->
+  <link rel="stylesheet" href="app-style.css">
+</head>
+<body class="bg-[#050811] text-[#F5F5F7]">
+
+  <!-- Strobe Alert Overlay for Screen Flashing -->
+  <div id="app-strobe-overlay" class="strobe-alert hidden"></div>
+
+  <!-- Desktop Wrapper -->
+  <div class="app-container-wrapper">
+    
+    <!-- Top Bar Controls (Desktop helper) -->
+    <div class="hidden sm:flex items-center gap-4 mb-3 text-xs font-mono text-gray-400">
+      <span class="flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+        <span>App Mobile Ativo</span>
+      </span>
+      <span>•</span>
+      <button onclick="toggleFullscreenMode()" id="toggle-fs-btn" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+        Tela Cheia
+      </button>
+      <span>•</span>
+      <a href="index.html" class="hover:text-[#EE9C00] transition-colors">
+        ← Voltar para o Site
+      </a>
+    </div>
+
+    <!-- Smartphone Mockup Chassis -->
+    <div class="mobile-phone-frame">
+      
+      <!-- Top Notch / Dynamic Island Bar -->
+      <div class="app-notch-bar">
+        <span>09:41</span>
+        
+        <!-- Dynamic Island -->
+        <div class="app-dynamic-island">
+          <div class="app-island-camera"></div>
+          <div id="island-status-dot" class="app-island-indicator"></div>
+        </div>
+
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <span>5G</span>
+          <span id="header-battery-val">88%</span>
+        </div>
+      </div>
+
+      <!-- App Header -->
+      <div class="app-header">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-[#EE9C00]/20 border border-[#EE9C00]/50 flex items-center justify-center text-[#EE9C00]">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+              <path d="M12 18h.01"/>
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-1 cursor-pointer" onclick="openDeviceModal()">
+              <h1 id="header-device-name" class="text-xs font-bold text-white flex items-center gap-1">
+                Meu iPhone 15 Pro
+                <svg class="w-3 h-3 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              </h1>
+            </div>
+            <span class="text-[9px] font-mono text-[#0284C7] flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#0284C7] animate-ping"></span>
+              Rede Mesh Online
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="openRegisterDeviceModal()" class="px-2 py-1 rounded-lg bg-white/10 hover:bg-[#EE9C00]/20 text-[#EE9C00] hover:text-white text-[10px] font-bold font-mono flex items-center gap-1 border border-[#EE9C00]/30 transition-all">
+            <span>+</span>
+            <span>Registrar</span>
+          </button>
+          <button onclick="toggleAlarm()" class="px-2.5 py-1 rounded-lg bg-[#EE9C00]/15 border border-[#EE9C00]/40 text-[#EE9C00] text-[10px] font-bold font-mono">
+            TESTAR 🔊
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Screen Body -->
+      <main class="app-screen-body">
+
+        <!-- ========================================== -->
+        <!-- 1. SCREEN: RADAR SONAR (HOME)             -->
+        <!-- ========================================== -->
+        <section id="screen-radar" class="app-screen-section p-4 flex flex-col items-center justify-between min-h-[580px]">
+          
+          <div class="w-full text-center pt-2">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-400 block">Varredura de Proximidade</span>
+            <h2 class="text-lg font-extrabold text-white">Radar Sônico 360°</h2>
+          </div>
+
+          <!-- Radar Sonar Visualization -->
+          <div class="relative w-64 h-64 flex items-center justify-center my-4">
+            <div class="app-sonar-ring app-ring-1"></div>
+            <div class="app-sonar-ring app-ring-2"></div>
+            <div class="app-sonar-ring app-ring-3"></div>
+            <div class="app-radar-beam"></div>
+
+            <!-- Central Target Device -->
+            <div class="relative z-20 w-20 h-20 rounded-3xl bg-[#121826] border-2 border-[#EE9C00] flex flex-col items-center justify-center shadow-xl shadow-[#EE9C00]/30 cursor-pointer" onclick="playSonarPing()">
+              <svg class="w-8 h-8 text-[#EE9C00] animate-pulse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+                <path d="M12 18h.01"/>
+              </svg>
+              <span class="text-[8px] font-mono text-[#EE9C00] font-bold mt-1">PING</span>
+            </div>
+          </div>
+
+          <!-- Distance & Signal Card -->
+          <div class="w-full app-card">
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[10px] font-mono text-gray-400 uppercase">Distância Estimada</span>
+              <span id="app-radar-dist" class="text-xl font-mono font-extrabold text-[#EE9C00]">3.2m</span>
+            </div>
+
+            <!-- Signal Progress Bar -->
+            <div class="w-full bg-white/10 h-2 rounded-full overflow-hidden mb-3">
+              <div id="app-radar-bar" class="h-full bg-gradient-to-r from-[#0284C7] to-[#EE9C00] rounded-full transition-all duration-500" style="width: 72%;"></div>
+            </div>
+
+            <p id="app-radar-status" class="text-xs text-teal-400 font-medium mb-3">
+              📡 Sinal UWB / BLE Forte
+            </p>
+
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/10">
+              <button onclick="playSonarPing()" class="py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-gray-200">
+                Emitir Bipe Sonar
+              </button>
+              <button onclick="switchTab('alarm')" class="py-2 rounded-xl bg-[#EE9C00] text-black text-xs font-bold">
+                Tocar Alarme 🚨
+              </button>
+            </div>
+          </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 2. SCREEN: REAL GPS MAP                    -->
+        <!-- ========================================== -->
+        <section id="screen-map" class="app-screen-section hidden relative w-full h-[620px]">
+          
+          <!-- Leaflet Dark Map Container -->
+          <div id="leaflet-map" class="w-full h-full"></div>
+
+          <!-- Top Floating Map Info -->
+          <div class="absolute top-3 left-3 right-3 z-30 app-card py-2.5 px-3 bg-black/80 backdrop-blur-md">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-[9px] font-mono text-[#0284C7] font-bold block uppercase">Localização GPS ao Vivo</span>
+                <p id="app-map-address" class="text-xs font-bold text-white truncate max-w-[200px]">Carregando endereço...</p>
+              </div>
+              <button onclick="centerOnDevice()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-[#EE9C00]">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 8 8 12 12 16 12 8"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Bottom Floating Map Actions -->
+          <div class="absolute bottom-4 left-3 right-3 z-30 flex gap-2">
+            <button onclick="switchTab('alarm')" class="flex-1 py-3 rounded-2xl btn-amber text-xs font-extrabold uppercase tracking-wider text-black flex items-center justify-center gap-1.5 shadow-xl">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+              <span>Disparar Alarme</span>
+            </button>
+            <a href="https://maps.google.com" target="_blank" class="px-4 py-3 rounded-2xl bg-black/80 border border-white/20 text-white text-xs font-bold flex items-center justify-center gap-1">
+              <span>Google Maps</span>
+            </a>
+          </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 3. SCREEN: ALARM CONTROL (SIREN)           -->
+        <!-- ========================================== -->
+        <section id="screen-alarm" class="app-screen-section hidden p-4 flex flex-col items-center justify-between min-h-[580px]">
+          
+          <div class="w-full text-center pt-2">
+            <span id="alarm-status-label" class="text-[10px] font-mono uppercase tracking-widest text-gray-400 block">Pronto para Disparo</span>
+            <h2 class="text-lg font-extrabold text-white">Alarme no Volume Máximo</h2>
+          </div>
+
+          <!-- Giant Glowing Disc Button -->
+          <div class="my-6">
+            <button id="giant-alarm-btn" onclick="toggleAlarm()" class="alarm-giant-btn">
+              <svg class="w-12 h-12 text-black mb-1" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/>
+              </svg>
+              <span class="text-sm font-extrabold text-black tracking-wider">TOCAR ALARME</span>
+              <span class="text-[9px] font-mono text-black/70">Toque para Disparar</span>
+            </button>
+          </div>
+
+          <!-- Alarm Sound & Controls Card -->
+          <div class="w-full app-card space-y-4">
+            
+            <!-- Sound Profiles -->
+            <div>
+              <span class="text-[10px] font-mono text-gray-400 uppercase block mb-2">Perfil Sonoro</span>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="setAlarmSound('siren')" data-sound="siren" class="sound-option-btn py-2 px-3 rounded-xl border border-[#EE9C00] text-[#EE9C00] bg-amber-500/10 text-xs font-bold">
+                  🚨 Sirene Policial
+                </button>
+                <button onclick="setAlarmSound('ultrasonic')" data-sound="ultrasonic" class="sound-option-btn py-2 px-3 rounded-xl border border-white/10 text-gray-400 text-xs font-bold">
+                  ⚡ Ultrassônico
+                </button>
+                <button onclick="setAlarmSound('horn')" data-sound="horn" class="sound-option-btn py-2 px-3 rounded-xl border border-white/10 text-gray-400 text-xs font-bold">
+                  📯 Corneta 110dB
+                </button>
+                <button onclick="setAlarmSound('sonar')" data-sound="sonar" class="sound-option-btn py-2 px-3 rounded-xl border border-white/10 text-gray-400 text-xs font-bold">
+                  🔊 Bipe Sonar
+                </button>
+              </div>
+            </div>
+
+            <!-- Volume Booster Slider -->
+            <div>
+              <div class="flex justify-between items-center text-xs font-mono mb-1">
+                <span class="text-gray-400">Potência de Volume</span>
+                <span id="alarm-vol-val" class="text-[#EE9C00] font-bold">100%</span>
+              </div>
+              <input type="range" id="alarm-vol-slider" min="0.2" max="1.5" step="0.1" value="1.0">
+            </div>
+
+            <div class="flex items-center justify-between text-xs text-gray-400 pt-1">
+              <span>Bypass de silencioso:</span>
+              <span class="font-bold text-green-400 font-mono">ATIVADO ✓</span>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 4. SCREEN: ACOUSTIC LISTENER (MIC)         -->
+        <!-- ========================================== -->
+        <section id="screen-listen" class="app-screen-section hidden p-4 flex flex-col justify-between min-h-[580px]">
+          
+          <div class="text-center pt-2">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-400 block">Detecção por Microfone</span>
+            <h2 class="text-lg font-extrabold text-white">Escuta de Palmas & Assobio</h2>
+          </div>
+
+          <!-- Waveform Canvas -->
+          <div class="my-4">
+            <canvas id="audio-waveform-canvas" width="340" height="90"></canvas>
+            <div class="flex justify-between items-center mt-2 px-1">
+              <span id="listen-status-badge" class="text-xs font-mono font-bold text-gray-500">
+                PAUSADO
+              </span>
+              <span class="text-[10px] text-gray-400 font-mono">FFT 512 Real-Time</span>
+            </div>
+          </div>
+
+          <!-- Controls Card -->
+          <div class="app-card space-y-4">
+            
+            <button id="listen-toggle-btn" onclick="toggleMicrophoneListener()" class="w-full py-3.5 rounded-xl btn-amber font-extrabold text-xs uppercase tracking-wider text-black">
+              Ativar Escuta de Palmas
+            </button>
+
+            <!-- Sensitivity -->
+            <div>
+              <div class="flex justify-between items-center text-xs font-mono mb-1">
+                <span class="text-gray-400">Sensibilidade do Microfone</span>
+                <span id="listen-sens-val" class="text-[#EE9C00] font-bold">70%</span>
+              </div>
+              <input type="range" id="listen-sensitivity-slider" min="20" max="95" value="70">
+            </div>
+
+            <!-- Simulation Fallback Button -->
+            <div class="pt-3 border-t border-white/10">
+              <p class="text-[11px] text-gray-400 mb-2">Sem microfone no momento? Teste o algoritmo:</p>
+              <button onclick="simulateClapEvent()" class="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-white transition-colors flex items-center justify-center gap-2">
+                <span>👏 Simular Detecção de 2x Palmas</span>
+              </button>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- ========================================== -->
+        <!-- 5. SCREEN: SECURITY & LOCKSCREEN           -->
+        <!-- ========================================== -->
+        <section id="screen-security" class="app-screen-section hidden p-4 space-y-4">
+          
+          <div class="text-center pt-2">
+            <span class="text-[10px] font-mono uppercase tracking-widest text-gray-400 block">Modo Anti-Furto</span>
+            <h2 class="text-lg font-extrabold text-white">Proteção & Tela de Bloqueio</h2>
+          </div>
+
+          <!-- Emergency Return Message Card -->
+          <div class="app-card">
+            <div class="flex items-center gap-2 mb-3">
+              <span class="text-lg">💬</span>
+              <h3 class="text-sm font-bold text-white">Mensagem na Tela Bloqueada</h3>
+            </div>
+            <p class="text-xs text-gray-300 leading-relaxed mb-4">
+              Se alguém encontrar seu celular na rua, esta mensagem será exibida na tela com seu contato de resgate e recompensa.
+            </p>
+
+            <div class="p-3 rounded-xl bg-black/60 border border-amber-500/30 text-xs text-gray-200 mb-3">
+              <p class="font-bold text-[#EE9C00]">⚠️ Celular Perdido</p>
+              <p class="mt-1">"Por favor, ligue para meu irmão: (11) 98765-4321. Recompensa de R$ 200 garantida!"</p>
+            </div>
+
+            <button onclick="showAppToast('Mensagem gravada na tela de bloqueio com sucesso!')" class="w-full py-2 rounded-xl bg-[#0284C7] text-white text-xs font-bold">
+              Salvar Dados de Resgate
+            </button>
+          </div>
+
+          <!-- Register Device Card in Security Tab -->
+          <div class="app-card border border-[#EE9C00]/30 bg-gradient-to-br from-[#121826] to-[#0A0F1D]">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <span class="text-lg">📲</span>
+                <h3 class="text-sm font-bold text-white">Cadastrar Novo Celular</h3>
+              </div>
+              <span class="text-[9px] font-mono bg-[#EE9C00]/20 text-[#EE9C00] px-2 py-0.5 rounded font-bold">MULTI-DEVICE</span>
+            </div>
+            <p class="text-xs text-gray-300 leading-relaxed mb-3">
+              Registre os celulares da sua família, segundo aparelho ou chaveiros Bluetooth para rastrear todos em uma única conta.
+            </p>
+            <button onclick="openRegisterDeviceModal()" class="w-full py-2.5 rounded-xl btn-amber text-xs font-bold uppercase tracking-wider text-black flex items-center justify-center gap-1.5 shadow-lg">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+              <span>+ Registrar Novo Aparelho</span>
+            </button>
+          </div>
+
+          <!-- Anti-Theft Toggles -->
+          <div class="app-card space-y-3">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-xs font-bold text-white">Foto Silenciosa do Intruso</p>
+                <p class="text-[10px] text-gray-400">Tira foto com a frontal após 2 erros de senha</p>
+              </div>
+              <span class="text-xs font-bold text-green-400 font-mono">LIGADO</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-white/10">
+              <div>
+                <p class="text-xs font-bold text-white">Bloqueio de Desligamento Falso</p>
+                <p class="text-[10px] text-gray-400">Exige PIN antes de permitir desligar o aparelho</p>
+              </div>
+              <span class="text-xs font-bold text-green-400 font-mono">LIGADO</span>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-white/10">
+              <div>
+                <p class="text-xs font-bold text-white">Beacon de Baixa Bateria</p>
+                <p class="text-[10px] text-gray-400">Salva GPS com 3% de bateria restante</p>
+              </div>
+              <span class="text-xs font-bold text-green-400 font-mono">LIGADO</span>
+            </div>
+          </div>
+
+        </section>
+
+      </main>
+
+      <!-- Bottom Tab Navigation Bar -->
+      <nav class="app-tab-bar">
+        
+        <button class="app-tab-btn active" data-tab="radar" onclick="switchTab('radar')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 2a10 10 0 0 1 10 10"/>
+            <path d="M12 6a6 6 0 0 1 6 6"/>
+            <circle cx="12" cy="12" r="2"/>
+          </svg>
+          <span>Radar</span>
+        </button>
+
+        <button class="app-tab-btn" data-tab="map" onclick="switchTab('map')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+            <line x1="8" x2="8" y1="2" y2="18"/>
+            <line x1="16" x2="16" y1="6" y2="22"/>
+          </svg>
+          <span>Mapa</span>
+        </button>
+
+        <button class="app-tab-btn" data-tab="alarm" onclick="switchTab('alarm')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+          <span>Alarme</span>
+        </button>
+
+        <button class="app-tab-btn" data-tab="listen" onclick="switchTab('listen')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+            <line x1="12" x2="12" y1="19" y2="22"/>
+          </svg>
+          <span>Escuta</span>
+        </button>
+
+        <button class="app-tab-btn" data-tab="security" onclick="switchTab('security')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span>Proteção</span>
+        </button>
+
+      </nav>
+
+    </div>
+
+  </div>
+
+  <!-- Device Selection Modal -->
+  <div id="device-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="app-card max-w-xs w-full bg-[#121826] border border-white/20 p-5">
+      <div class="flex justify-between items-center mb-4">
+        <div>
+          <h3 class="text-sm font-bold text-white">Dispositivos Pareados</h3>
+          <p class="text-[10px] text-gray-400">Toque para alternar o rastreamento</p>
+        </div>
+        <button onclick="closeDeviceModal()" class="text-gray-400 hover:text-white p-1">✕</button>
+      </div>
+
+      <!-- Dynamic Device List Container -->
+      <div id="device-list-container" class="space-y-2 mb-4 max-h-60 overflow-y-auto">
+        <!-- Rendered by app.js -->
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2">
+        <button onclick="openRegisterDeviceModal()" class="w-full py-2.5 rounded-xl btn-amber text-xs font-bold uppercase tracking-wider text-black flex items-center justify-center gap-1.5 shadow-lg">
+          <span>+ Cadastrar Novo Celular</span>
+        </button>
+        <button onclick="closeDeviceModal()" class="w-full py-2 rounded-xl bg-white/10 text-xs font-bold text-gray-300 hover:text-white">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGISTER NEW DEVICE MODAL -->
+  <div id="register-device-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+    <div class="app-card max-w-sm w-full bg-[#121826] border border-[#EE9C00]/40 p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <button onclick="closeRegisterDeviceModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white p-1">✕</button>
+
+      <!-- Modal Header -->
+      <div class="text-center mb-5">
+        <div class="w-12 h-12 rounded-2xl bg-[#EE9C00]/20 border border-[#EE9C00]/50 text-[#EE9C00] flex items-center justify-center mx-auto mb-2">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="14" height="20" x="5" y="2" rx="2" ry="2"/>
+            <path d="M12 18h.01"/>
+            <path d="M12 6v6m-3-3h6"/>
+          </svg>
+        </div>
+        <h3 class="text-base font-extrabold text-white">Registrar Novo Celular</h3>
+        <p class="text-xs text-gray-400 mt-0.5">Vincule e proteja este aparelho imediatamente</p>
+      </div>
+
+      <!-- Registration Form -->
+      <form onsubmit="submitDeviceRegistration(event)" class="space-y-4">
+        
+        <!-- Device Name -->
+        <div>
+          <label class="block text-[11px] font-mono text-gray-300 uppercase mb-1">Nome do Aparelho *</label>
+          <input type="text" id="reg-device-name" required placeholder="Ex: iPhone 15 do Lucas" class="w-full px-3.5 py-2.5 rounded-xl bg-black/70 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#EE9C00] transition-colors">
+        </div>
+
+        <!-- Model / Brand -->
+        <div>
+          <label class="block text-[11px] font-mono text-gray-300 uppercase mb-1">Marca / Modelo</label>
+          <select id="reg-device-model" class="w-full px-3.5 py-2.5 rounded-xl bg-black/70 border border-white/15 text-xs text-white focus:outline-none focus:border-[#EE9C00] transition-colors">
+            <option value="Apple iPhone">Apple iPhone (iOS)</option>
+            <option value="Samsung Galaxy">Samsung Galaxy (Android)</option>
+            <option value="Motorola Edge/Moto G">Motorola (Android)</option>
+            <option value="Xiaomi / Redmi">Xiaomi / Redmi (Android)</option>
+            <option value="Outro Android">Outro Smartphone Android</option>
+            <option value="Tag Bluetooth BLE">Chaveiro / Tag BLE</option>
+          </select>
+        </div>
+
+        <!-- Emergency Contact Phone -->
+        <div>
+          <label class="block text-[11px] font-mono text-gray-300 uppercase mb-1">Telefone de Contato / Resgate</label>
+          <input type="tel" id="reg-device-phone" placeholder="Ex: (11) 98765-4321" class="w-full px-3.5 py-2.5 rounded-xl bg-black/70 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#EE9C00] transition-colors">
+          <span class="text-[10px] text-gray-400 block mt-1">Será exibido na tela de bloqueio caso seja perdido.</span>
+        </div>
+
+        <!-- Capture Current Location Button -->
+        <div class="p-3 rounded-xl bg-black/50 border border-white/10 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono uppercase text-gray-300">Localização Inicial</span>
+            <button type="button" onclick="captureCurrentGPSForRegistration()" class="px-2.5 py-1 rounded-lg bg-[#0284C7] hover:bg-[#0EA5E9] text-[10px] font-bold text-white transition-colors flex items-center gap-1">
+              <span>📍 Capturar GPS Agora</span>
+            </button>
+          </div>
+          <div id="reg-gps-status" class="text-[10px] font-mono">
+            <span class="text-gray-400">Clique para vincular as coordenadas deste aparelho.</span>
+          </div>
+        </div>
+
+        <!-- Security PIN -->
+        <div>
+          <label class="block text-[11px] font-mono text-gray-300 uppercase mb-1">PIN Anti-Furto (4 dígitos)</label>
+          <input type="password" id="reg-device-pin" maxlength="4" placeholder="1234" value="1234" class="w-full px-3.5 py-2.5 rounded-xl bg-black/70 border border-white/15 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-[#EE9C00] font-mono tracking-widest text-center">
+          <span class="text-[10px] text-gray-400 block mt-1">Necessário para desativar o alarme quando tocar.</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pt-2 space-y-2">
+          <button type="submit" class="w-full py-3 rounded-xl btn-amber font-extrabold text-xs uppercase tracking-wider text-black flex items-center justify-center gap-2 shadow-xl">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+            <span>Cadastrar e Ativar Rastreamento</span>
+          </button>
+          <button type="button" onclick="closeRegisterDeviceModal()" class="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 text-xs font-bold text-gray-300">
+            Cancelar
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- App Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
